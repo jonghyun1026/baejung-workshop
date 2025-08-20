@@ -46,7 +46,11 @@ export default function AdminDebugPage() {
           name: user.user_metadata?.name || user.user_metadata?.full_name || user.email || '이름 없음',
           school: '미설정',
           major: '미설정',
-          role: 'student'
+          role: 'student',
+          gender: '미설정',
+          generation: '1',
+          status: 'active',
+          ws_group: '미정'
         })
       
       if (error && error.code !== '23505') { // 23505는 중복 키 오류
@@ -83,7 +87,11 @@ export default function AdminDebugPage() {
             name: user.user_metadata?.name || user.user_metadata?.full_name || user.email || '이름 없음',
             school: '미설정',
             major: '미설정',
-            role: 'admin'
+            role: 'admin',
+            gender: '미설정',
+            generation: '1',
+            status: 'active',
+            ws_group: '관리자'
           })
       } else {
         // 기존 사용자를 관리자로 업데이트
