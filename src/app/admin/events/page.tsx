@@ -198,18 +198,21 @@ export default function AdminEventsPage() {
     try {
       const { supabase } = await import('@/lib/supabase')
       const { data, error } = await supabase
-        .rpc('admin_update_event', {
-          p_id: selectedEvent.id,
-          p_title: formData.title,
-          p_start_time: formData.start_time,
-          p_event_date: formData.event_date,
-          p_description: formData.description || null,
-          p_end_time: formData.end_time || null,
-          p_location: formData.location || null,
-          p_order_index: formData.order_index ? parseInt(formData.order_index) : null
+        .from('events')
+        .update({
+          title: formData.title,
+          start_time: formData.start_time,
+          event_date: formData.event_date,
+          description: formData.description || null,
+          end_time: formData.end_time || null,
+          location: formData.location || null,
+          order_index: formData.order_index ? parseInt(formData.order_index) : null
         })
+        .eq('id', selectedEvent.id)
+        .select()
+        .single()
 
-      if (error || !data) throw error || new Error('수정 실패')
+      if (error) throw error
 
       await loadEvents()
       setIsEditModalOpen(false)
@@ -236,12 +239,12 @@ export default function AdminEventsPage() {
 
     try {
       const { supabase } = await import('@/lib/supabase')
-      const { data, error } = await supabase
-        .rpc('admin_delete_event', {
-          p_id: event.id
-        })
+      const { error } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', event.id)
 
-      if (error || !data) throw error || new Error('삭제 실패')
+      if (error) throw error
 
       await loadEvents()
       toast({
