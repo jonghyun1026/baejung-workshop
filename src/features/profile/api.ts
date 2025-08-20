@@ -55,18 +55,21 @@ export async function uploadProfileImage(file: File, userInfo: { id?: string, na
       .from('profiles')
       .getPublicUrl(filePath)
 
-    // 3. users 테이블에 프로필 이미지 URL 업데이트 (RLS 우회 함수 사용)
+    // 3. users 테이블에 프로필 이미지 URL 업데이트
     const { data: updateResult, error: dbError } = await supabase
-      .rpc('update_user_profile_image', {
-        user_id: actualUserId,
-        image_url: urlData.publicUrl
+      .from('users')
+      .update({
+        profile_image_url: urlData.publicUrl
       })
+      .eq('id', actualUserId)
+      .select()
+      .single()
 
-    if (dbError || !updateResult) {
+    if (dbError) {
       console.error('❌ DB 업데이트 실패:', dbError)
       // 업로드된 파일 삭제
       await supabase.storage.from('profiles').remove([filePath])
-      throw dbError || new Error('프로필 이미지 URL 업데이트 실패')
+      throw dbError
     }
 
     // 업데이트된 사용자 정보 조회
