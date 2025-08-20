@@ -52,7 +52,7 @@ export default function DirectoryAuthForm() {
   }
 
   // 이름 검색 기능
-  const searchUsers = async (query: string) => {
+  const handleSearchUsers = async (query: string) => {
     if (query.length < 1) {
       setSearchResults([])
       setShowDropdown(false)
@@ -62,7 +62,7 @@ export default function DirectoryAuthForm() {
     try {
       setSearchLoading(true)
       const results = await searchUsers(query)
-      setSearchResults(results)
+      setSearchResults(results || [])
       setShowDropdown(true)
     } catch (error) {
       console.error('사용자 검색 오류:', error)
@@ -79,7 +79,7 @@ export default function DirectoryAuthForm() {
     
     // 디바운싱을 위한 타이머
     const timeoutId = setTimeout(() => {
-      searchUsers(value)
+      handleSearchUsers(value)
     }, 300)
 
     return () => clearTimeout(timeoutId)
