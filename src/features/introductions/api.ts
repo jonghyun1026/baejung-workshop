@@ -48,19 +48,42 @@ export async function saveIntroduction(userId: string, data: IntroductionFormDat
   try {
     console.log('📝 자기소개 저장 시작:', { userId, data })
 
-    // 1. users 테이블 업데이트 (기본 정보)
-    const { error: userError } = await supabase
-      .from('users')
-      .update({
-        name: data.name,
-        school: data.school,
-        major: data.major
-      })
-      .eq('id', userId)
+    // 1. users 테이블 업데이트 (기본 정보) - RLS 우회를 위해 service role key 사용
+    try {
+      const { error: userError } = await supabase
+        .from('users')
+        .update({
+          name: data.name,
+          school: data.school,
+          major: data.major
+        })
+        .eq('id', userId)
 
-    if (userError) {
-      console.error('❌ 사용자 정보 업데이트 에러:', userError)
-      throw userError
+      if (userError) {
+        console.error('❌ 사용자 정보 업데이트 에러:', userError)
+        // RLS 오류인 경우 RPC 함수 사용
+        if (userError.message.includes('Row Level Security') || userError.code === '42501') {
+          console.log('🔄 RPC 함수로 재시도...')
+          const { data: updateResult, error: rpcError } = await supabase.rpc('update_user_basic_info', {
+            p_user_id: userId,
+            p_name: data.name,
+            p_school: data.school,
+            p_major: data.major
+          })
+          
+          if (rpcError) {
+            throw new Error(`사용자 정보 업데이트 실패: ${rpcError.message}`)
+          }
+          console.log('✅ RPC로 사용자 기본 정보 업데이트 성공:', updateResult?.[0] || updateResult)
+        } else {
+          throw userError
+        }
+      } else {
+        console.log('✅ 직접 업데이트 성공')
+      }
+    } catch (error: any) {
+      console.error('❌ 사용자 정보 업데이트 실패:', error)
+      throw error
     }
 
     // 2. introductions 테이블에 저장/업데이트
@@ -94,20 +117,24 @@ export async function saveIntroduction(userId: string, data: IntroductionFormDat
         .update(introData)
         .eq('user_id', userId)
         .select()
-        .single()
 
-      if (error) throw error
-      result = updatedData
+      if (error) {
+        console.error('❌ 자기소개 업데이트 실패:', error)
+        throw new Error(`자기소개 업데이트 실패: ${error.message}`)
+      }
+      result = Array.isArray(updatedData) ? updatedData[0] : updatedData
     } else {
       // 새로 생성
       const { data: newData, error } = await supabase
         .from('introductions')
         .insert(introData)
         .select()
-        .single()
 
-      if (error) throw error
-      result = newData
+      if (error) {
+        console.error('❌ 자기소개 생성 실패:', error)
+        throw new Error(`자기소개 생성 실패: ${error.message}`)
+      }
+      result = Array.isArray(newData) ? newData[0] : newData
     }
 
     console.log('✅ 자기소개 저장 성공')

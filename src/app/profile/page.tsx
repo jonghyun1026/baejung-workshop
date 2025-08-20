@@ -24,7 +24,7 @@ import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { uploadProfileImage, deleteProfileImage, getUserProfile, getProfileImageUrl } from '@/features/profile/api'
+import { uploadProfileImage, deleteProfileImage, getUserProfile, getProfileImageUrl, hasUploadedProfileImageSync } from '@/features/profile/api'
 import Link from 'next/link'
 
 export default function ProfilePage() {
@@ -39,6 +39,7 @@ export default function ProfilePage() {
   // 프로필 사진 관련 state
   const [uploadingImage, setUploadingImage] = useState(false)
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
+  const [hasRealProfileImage, setHasRealProfileImage] = useState<boolean>(false)
   
   // 편집 가능한 필드들
   const [editData, setEditData] = useState({
@@ -59,16 +60,23 @@ export default function ProfilePage() {
     try {
       setLoading(true)
       
+      console.log('📊 프로필 데이터 로딩 시작:', user.name)
       const data = await getUserProfile({ id: user.id, name: user.name })
+      console.log('📊 프로필 데이터 로딩 완료:', data?.name, '이미지:', data?.profile_image_url)
+      
+      // 실제 업로드된 이미지 존재 여부 확인
+      const hasRealImage = hasUploadedProfileImageSync(data)
+      console.log('🔍 실제 업로드된 이미지 존재:', hasRealImage)
       
       setProfileData(data)
+      setHasRealProfileImage(hasRealImage)
       setEditData({
         phone_number: data.phone_number || '',
         attendance: data.attendance || '',
         program: data.program || ''
       })
     } catch (error: any) {
-      console.error('프로필 데이터 로딩 실패:', error)
+      console.error('📊 프로필 데이터 로딩 실패:', error)
       toast({
         title: "프로필 로딩 실패",
         description: error.message,
@@ -85,6 +93,12 @@ export default function ProfilePage() {
     try {
       setLoading(true)
 
+      console.log('🔄 프로필 정보 업데이트 시도:', {
+        userId: user.id,
+        editData
+      })
+
+      // 직접 업데이트 시도, 실패 시 RPC 함수 사용
       const { error } = await supabase
         .from('users')
         .update({
@@ -94,7 +108,27 @@ export default function ProfilePage() {
         })
         .eq('id', user.id)
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ 직접 업데이트 실패, RPC 함수로 재시도:', error)
+        // RLS 오류인 경우 RPC 함수 사용
+        if (error.message.includes('Row Level Security') || error.code === '42501') {
+          const { data: updateResult, error: rpcError } = await supabase.rpc('update_user_profile_info', {
+            p_user_id: user.id,
+            p_phone_number: editData.phone_number || null,
+            p_attendance: editData.attendance || null,
+            p_program: editData.program || null
+          })
+          
+          if (rpcError) {
+            throw new Error(`프로필 업데이트 실패: ${rpcError.message}`)
+          }
+          console.log('✅ RPC로 프로필 업데이트 성공:', updateResult?.[0] || updateResult)
+        } else {
+          throw error
+        }
+      } else {
+        console.log('✅ 직접 프로필 업데이트 성공')
+      }
 
       setProfileData({
         ...profileData,
@@ -110,7 +144,7 @@ export default function ProfilePage() {
       console.error('프로필 업데이트 실패:', error)
       toast({
         title: "업데이트 실패",
-        description: error.message,
+        description: error.message || '알 수 없는 오류가 발생했습니다.',
         variant: "destructive"
       })
     } finally {
@@ -163,15 +197,40 @@ export default function ProfilePage() {
     try {
       setUploadingImage(true)
       
-      await uploadProfileImage(selectedImage, { id: user.id, name: user.name })
+      console.log('🔄 프로필 이미지 업로드 시도:', {
+        fileName: selectedImage.name,
+        fileSize: selectedImage.size,
+        fileType: selectedImage.type,
+        user: { id: user.id, name: user.name }
+      })
+      
+      const updatedUserData = await uploadProfileImage(selectedImage, { id: user.id, name: user.name })
       
       toast({
         title: "프로필 사진 업로드 완료",
         description: "프로필 사진이 성공적으로 업로드되었습니다.",
       })
       
-      // 프로필 데이터 새로고침
-      await loadProfileData()
+      // 업로드 함수에서 반환된 업데이트된 사용자 데이터로 즉시 상태 업데이트
+      console.log('🔄 업로드 결과로 프로필 데이터 업데이트:', updatedUserData?.profile_image_url)
+      if (updatedUserData) {
+        const hasRealImage = hasUploadedProfileImageSync(updatedUserData)
+        setProfileData(updatedUserData)
+        setHasRealProfileImage(hasRealImage)
+        setEditData({
+          phone_number: updatedUserData.phone_number || '',
+          attendance: updatedUserData.attendance || '',
+          program: updatedUserData.program || ''
+        })
+        console.log('✅ 프로필 데이터 즉시 업데이트 완료, 실제 이미지:', hasRealImage)
+      }
+      
+      // 추가 안전장치: 약간의 지연 후 DB에서 다시 한 번 확인
+      setTimeout(async () => {
+        console.log('🔄 안전장치: 지연된 프로필 데이터 새로고침')
+        await loadProfileData()
+      }, 1500)
+      
       setSelectedImage(null)
       
       // 파일 input 초기화
@@ -181,9 +240,23 @@ export default function ProfilePage() {
       }
     } catch (error: any) {
       console.error('프로필 사진 업로드 실패:', error)
+      
+      let errorMessage = error.message || '알 수 없는 오류가 발생했습니다.'
+      
+      // 일반적인 오류들에 대한 사용자 친화적 메시지
+      if (errorMessage.includes('The resource already exists')) {
+        errorMessage = '동일한 이름의 파일이 이미 존재합니다. 잠시 후 다시 시도해주세요.'
+      } else if (errorMessage.includes('Row Level Security')) {
+        errorMessage = '권한이 없습니다. 다시 로그인해주세요.'
+      } else if (errorMessage.includes('413') || errorMessage.includes('too large')) {
+        errorMessage = '파일 크기가 너무 큽니다. 5MB 이하의 파일을 선택해주세요.'
+      } else if (errorMessage.includes('400') || errorMessage.includes('Bad Request')) {
+        errorMessage = '잘못된 파일 형식입니다. JPG, PNG, WebP 파일만 업로드 가능합니다.'
+      }
+      
       toast({
         title: "업로드 실패",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive"
       })
     } finally {
@@ -200,6 +273,9 @@ export default function ProfilePage() {
       setUploadingImage(true)
       
       await deleteProfileImage({ id: user.id, name: user.name })
+      
+      // 삭제 후 즉시 상태 업데이트
+      setHasRealProfileImage(false)
       
       toast({
         title: "프로필 사진 삭제 완료",
@@ -274,13 +350,17 @@ export default function ProfilePage() {
                     src={getProfileImageUrl(profileData)}
                     alt="프로필 사진"
                     className="w-full h-full object-cover"
+                    onLoad={() => {
+                      console.log('🖼️ 프로필 이미지 로드 성공:', getProfileImageUrl(profileData))
+                    }}
                     onError={(e) => {
                       const img = e.target as HTMLImageElement
+                      console.error('🖼️ 프로필 이미지 로드 실패:', img.src)
                       img.src = 'https://picsum.photos/200/200?grayscale&blur=1'
                     }}
                   />
                 </div>
-                {profileData?.profile_image_url && (
+                {hasRealProfileImage && (
                   <Button
                     size="sm"
                     variant="destructive"

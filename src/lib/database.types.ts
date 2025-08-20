@@ -356,6 +356,7 @@ export type Database = {
           role: string | null
           school: string
           status: string
+          updated_at: string | null
           ws_group: string
         }
         Insert: {
@@ -373,6 +374,7 @@ export type Database = {
           role?: string | null
           school: string
           status: string
+          updated_at?: string | null
           ws_group: string
         }
         Update: {
@@ -390,6 +392,7 @@ export type Database = {
           role?: string | null
           school?: string
           status?: string
+          updated_at?: string | null
           ws_group?: string
         }
         Relationships: []
@@ -427,6 +430,52 @@ export type Database = {
       }
     }
     Functions: {
+      admin_create_event: {
+        Args: {
+          p_description?: string
+          p_end_time?: string
+          p_event_date: string
+          p_location?: string
+          p_order_index?: number
+          p_start_time: string
+          p_title: string
+        }
+        Returns: string
+      }
+      admin_create_notice: {
+        Args: { p_content: string; p_is_important?: boolean; p_title: string }
+        Returns: string
+      }
+      admin_delete_event: {
+        Args: { p_id: string }
+        Returns: boolean
+      }
+      admin_delete_notice: {
+        Args: { p_id: string }
+        Returns: boolean
+      }
+      admin_update_event: {
+        Args: {
+          p_description?: string
+          p_end_time?: string
+          p_event_date: string
+          p_id: string
+          p_location?: string
+          p_order_index?: number
+          p_start_time: string
+          p_title: string
+        }
+        Returns: boolean
+      }
+      admin_update_notice: {
+        Args: {
+          p_content: string
+          p_id: string
+          p_is_important?: boolean
+          p_title: string
+        }
+        Returns: boolean
+      }
       assign_room_by_name_and_number: {
         Args: {
           p_building_name?: string
@@ -439,46 +488,179 @@ export type Database = {
         Args: { assignments: Json }
         Returns: Json
       }
+      delete_profile_image_url: {
+        Args: { p_user_id: string }
+        Returns: {
+          attendance: string | null
+          birth_date: string | null
+          gender: string
+          generation: string
+          id: string
+          major: string
+          name: string
+          password_hash: string | null
+          phone_number: string | null
+          profile_image_url: string | null
+          program: string | null
+          role: string | null
+          school: string
+          status: string
+          updated_at: string | null
+          ws_group: string
+        }
+      }
+      delete_user_profile_image: {
+        Args: { p_user_id: string }
+        Returns: {
+          attendance: string
+          birth_date: string
+          created_at: string
+          gender: string
+          generation: string
+          id: string
+          major: string
+          name: string
+          password_hash: string
+          phone_number: string
+          profile_image_url: string
+          program: string
+          role: string
+          school: string
+          status: string
+          updated_at: string
+          ws_group: string
+        }[]
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      get_roommates_by_room_id: {
+        Args: { p_room_id: string }
+        Returns: Json
+      }
+      get_user_room_by_name: {
+        Args: { p_user_name: string }
         Returns: Json
       }
       make_current_user_admin: {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      set_user_password: {
+        Args: { p_password_hash: string; p_user_id: string }
+        Returns: {
+          attendance: string | null
+          birth_date: string | null
+          gender: string
+          generation: string
+          id: string
+          major: string
+          name: string
+          password_hash: string | null
+          phone_number: string | null
+          profile_image_url: string | null
+          program: string | null
+          role: string | null
+          school: string
+          status: string
+          updated_at: string | null
+          ws_group: string
+        }
+      }
       sync_current_user: {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
-      set_user_password: {
-        Args: {
-          p_user_id: string
-          p_password_hash: string
-        }
-        Returns: {
-          id: string
-          name: string
-          school: string
-          major: string
-          generation: string
-          gender: string
-          role: string
-          status: string
-          ws_group: string
-          phone_number: string | null
-          birth_date: string | null
-          program: string | null
-          attendance: string | null
-          profile_image_url: string | null
-          password_hash: string | null
-          created_at: string | null
-          updated_at: string | null
-        }
-      }
       unassign_room_by_name: {
         Args: { user_name: string }
         Returns: Json
+      }
+      update_profile_image_url: {
+        Args: { p_image_url: string; p_user_id: string }
+        Returns: {
+          attendance: string | null
+          birth_date: string | null
+          gender: string
+          generation: string
+          id: string
+          major: string
+          name: string
+          password_hash: string | null
+          phone_number: string | null
+          profile_image_url: string | null
+          program: string | null
+          role: string | null
+          school: string
+          status: string
+          updated_at: string | null
+          ws_group: string
+        }
+      }
+      update_user_basic_info: {
+        Args: {
+          p_major: string
+          p_name: string
+          p_school: string
+          p_user_id: string
+        }
+        Returns: {
+          attendance: string
+          birth_date: string
+          created_at: string
+          gender: string
+          generation: string
+          id: string
+          major: string
+          name: string
+          password_hash: string
+          phone_number: string
+          profile_image_url: string
+          program: string
+          role: string
+          school: string
+          status: string
+          updated_at: string
+          ws_group: string
+        }[]
+      }
+      update_user_profile_image: {
+        Args: { p_profile_image_url: string; p_user_id: string }
+        Returns: {
+          id: string
+          major: string
+          name: string
+          profile_image_url: string
+          school: string
+          updated_at: string
+        }[]
+      }
+      update_user_profile_info: {
+        Args: {
+          p_attendance: string
+          p_phone_number: string
+          p_program: string
+          p_user_id: string
+        }
+        Returns: {
+          attendance: string
+          birth_date: string
+          created_at: string
+          gender: string
+          generation: string
+          id: string
+          major: string
+          name: string
+          password_hash: string
+          phone_number: string
+          profile_image_url: string
+          program: string
+          role: string
+          school: string
+          status: string
+          updated_at: string
+          ws_group: string
+        }[]
       }
     }
     Enums: {

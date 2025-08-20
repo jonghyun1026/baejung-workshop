@@ -17,7 +17,7 @@ import { z } from 'zod'
 import { saveIntroduction, getUserIntroduction, type IntroductionFormData } from '@/features/introductions/api'
 import { useAuth } from '@/hooks/useAuth'
 import { getUsers, type User } from '@/features/users/api'
-import { uploadProfileImage, deleteProfileImage, getUserProfile, getProfileImageUrl } from '@/features/profile/api'
+import { uploadProfileImage, deleteProfileImage, getUserProfile, getProfileImageUrl, hasUploadedProfileImageSync } from '@/features/profile/api'
 
 const introductionSchema = z.object({
   name: z.string().min(1, '이름을 입력해주세요'),
@@ -57,6 +57,7 @@ export default function IntroductionPage() {
   
   // 프로필 사진 관련 상태
   const [profileImage, setProfileImage] = useState<string | null>(null)
+  const [hasRealProfileImage, setHasRealProfileImage] = useState<boolean>(false)
   const [uploadingImage, setUploadingImage] = useState(false)
   const [imageUploadError, setImageUploadError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -193,15 +194,29 @@ export default function IntroductionPage() {
   // 프로필 이미지 로드
   const loadProfileImage = async (userId: string) => {
     try {
-      const selectedUser = users.find(u => u.id === userId)
+      console.log('🖼️ 프로필 이미지 로드 시작:', userId)
+      const selectedUser = users.find(u => u.id === userId) || 
+                          (user?.id === userId ? user : null)
+      
       if (selectedUser) {
         const userProfile = await getUserProfile({ id: userId, name: selectedUser.name })
         const imageUrl = getProfileImageUrl(userProfile)
+        const hasRealImage = hasUploadedProfileImageSync(userProfile)
+        
+        console.log('🖼️ 프로필 이미지 URL:', imageUrl)
+        console.log('🔍 실제 업로드된 이미지 존재:', hasRealImage)
+        
         setProfileImage(imageUrl)
+        setHasRealProfileImage(hasRealImage)
+      } else {
+        console.warn('🖼️ 사용자를 찾을 수 없음:', userId)
+        setProfileImage('https://picsum.photos/200/200?grayscale&blur=1')
+        setHasRealProfileImage(false)
       }
     } catch (err) {
-      console.error('프로필 이미지 로드 실패:', err)
+      console.error('🖼️ 프로필 이미지 로드 실패:', err)
       setProfileImage('https://picsum.photos/200/200?grayscale&blur=1')
+      setHasRealProfileImage(false)
     }
   }
 
@@ -264,6 +279,10 @@ export default function IntroductionPage() {
     setSelectedUserId(userId)
     setError(null)
     setImageUploadError(null)
+    
+    // 프로필 이미지 상태 초기화
+    setProfileImage(null)
+    setHasRealProfileImage(false)
     
     const selectedUser = users.find(u => u.id === userId)
     if (selectedUser) {
@@ -346,19 +365,34 @@ export default function IntroductionPage() {
       setUploadingImage(true)
       setImageUploadError(null)
 
-      // 현재 선택된 사용자 정보
-      const currentUser = selectedUserId ? users.find(u => u.id === selectedUserId) : user
+      // 현재 선택된 사용자 정보 (선택된 사용자 우선, 없으면 인증된 사용자)
+      const currentUser = selectedUserId ? users.find(u => u.id === selectedUserId) : 
+                         user ? users.find(u => u.id === user.id) || user : null
+      
       if (!currentUser) {
-        setImageUploadError('사용자를 선택해주세요.')
+        setImageUploadError('로그인하거나 참가자를 선택해주세요.')
         return
       }
 
       console.log('📤 프로필 이미지 업로드 시작:', file.name, currentUser)
 
-      await uploadProfileImage(file, { id: currentUser.id, name: currentUser.name })
+      const updatedUserData = await uploadProfileImage(file, { id: currentUser.id, name: currentUser.name })
       
-      // 업로드 성공 후 이미지 다시 로드
-      await loadProfileImage(currentUser.id)
+      // 업로드 결과에서 새로운 이미지 URL 가져와서 즉시 상태 업데이트
+      console.log('🔄 업로드 결과로 프로필 이미지 업데이트:', updatedUserData?.profile_image_url)
+      if (updatedUserData?.profile_image_url) {
+        const imageUrl = getProfileImageUrl(updatedUserData)
+        const hasRealImage = hasUploadedProfileImageSync(updatedUserData)
+        setProfileImage(imageUrl)
+        setHasRealProfileImage(hasRealImage)
+        console.log('✅ 프로필 이미지 즉시 업데이트 완료:', imageUrl, '실제 이미지:', hasRealImage)
+      }
+      
+      // 추가 안전장치: 약간의 지연 후 다시 로드
+      setTimeout(async () => {
+        console.log('🔄 안전장치: 지연된 프로필 이미지 새로고침')
+        await loadProfileImage(currentUser.id)
+      }, 1500)
       
       console.log('✅ 프로필 이미지 업로드 완료')
     } catch (error) {
@@ -379,14 +413,17 @@ export default function IntroductionPage() {
       setUploadingImage(true)
       setImageUploadError(null)
 
-      const currentUser = selectedUserId ? users.find(u => u.id === selectedUserId) : user
+      const currentUser = selectedUserId ? users.find(u => u.id === selectedUserId) : 
+                         user ? users.find(u => u.id === user.id) || user : null
+      
       if (!currentUser) {
-        setImageUploadError('사용자를 선택해주세요.')
+        setImageUploadError('로그인하거나 참가자를 선택해주세요.')
         return
       }
 
       await deleteProfileImage({ id: currentUser.id, name: currentUser.name })
       setProfileImage('https://picsum.photos/200/200?grayscale&blur=1')
+      setHasRealProfileImage(false)
       
       console.log('✅ 프로필 이미지 삭제 완료')
     } catch (error) {
@@ -566,20 +603,29 @@ export default function IntroductionPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => fileInputRef.current?.click()}
-                      disabled={uploadingImage || !selectedUserId}
+                      disabled={uploadingImage || (!selectedUserId && !user?.id)}
                       className="flex items-center space-x-2"
                     >
                       <Camera className="h-4 w-4" />
                       <span>사진 업로드</span>
                     </Button>
                     
-                    {profileImage && !profileImage.includes('picsum.photos') && (
+                    {/* 디버깅을 위한 로그 */}
+                    {console.log('🔍 삭제 버튼 렌더링 조건 확인:', {
+                      hasRealProfileImage,
+                      profileImage,
+                      selectedUserId,
+                      userId: user?.id,
+                      profileImageIncludesPicksum: profileImage?.includes('picsum.photos')
+                    })}
+                    
+                    {hasRealProfileImage && (
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
                         onClick={handleImageDelete}
-                        disabled={uploadingImage || !selectedUserId}
+                        disabled={uploadingImage || (!selectedUserId && !user?.id)}
                         className="flex items-center space-x-2 text-red-600 hover:text-red-700"
                       >
                         <X className="h-4 w-4" />
