@@ -158,17 +158,20 @@ export default function AdminEventsPage() {
     try {
       const { supabase } = await import('@/lib/supabase')
       
-      // RLS 우회 함수 사용 (관리자 이벤트 생성)
+      // 이벤트 생성
       const { data, error } = await supabase
-        .rpc('admin_create_event', {
-          p_title: formData.title,
-          p_start_time: formData.start_time,
-          p_event_date: formData.event_date,
-          p_description: formData.description || null,
-          p_end_time: formData.end_time || null,
-          p_location: formData.location || null,
-          p_order_index: formData.order_index ? parseInt(formData.order_index) : null
+        .from('events')
+        .insert({
+          title: formData.title,
+          start_time: formData.start_time,
+          event_date: formData.event_date,
+          description: formData.description || null,
+          end_time: formData.end_time || null,
+          location: formData.location || null,
+          order_index: formData.order_index ? parseInt(formData.order_index) : null
         })
+        .select()
+        .single()
 
       if (error) throw error
 
