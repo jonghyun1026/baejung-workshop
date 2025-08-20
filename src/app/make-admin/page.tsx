@@ -45,10 +45,14 @@ export default function MakeAdminPage() {
           .from('users')
           .insert({
             id: user.id,
-            name: user.user_metadata?.name || user.user_metadata?.full_name || user.email || '관리자',
+            name: user.name || user.email || '관리자',
             school: '시스템',
             major: '관리자',
-            role: 'admin'
+            role: 'admin',
+            gender: '미설정',
+            generation: '1',
+            status: 'active',
+            ws_group: '관리자'
           })
 
         if (error) throw error
