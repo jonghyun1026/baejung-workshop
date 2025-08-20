@@ -1,0 +1,9 @@
+CREATE TABLE notices (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  title VARCHAR(200) NOT NULL,
+  content TEXT NOT NULL,
+  author_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  is_important BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+); 

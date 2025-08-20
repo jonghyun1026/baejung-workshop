@@ -1,0 +1,12 @@
+CREATE TABLE events (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  title VARCHAR(200) NOT NULL,
+  description TEXT,
+  start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+  end_time TIMESTAMP WITH TIME ZONE NOT NULL,
+  location VARCHAR(200),
+  event_date DATE NOT NULL,
+  order_index INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+); 

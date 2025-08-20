@@ -1,0 +1,7 @@
+CREATE TABLE rooms (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  room_number VARCHAR(50) NOT NULL UNIQUE,
+  building_name VARCHAR(100) NOT NULL,
+  capacity INTEGER NOT NULL DEFAULT 2,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+); 
