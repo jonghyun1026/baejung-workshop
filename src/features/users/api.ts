@@ -176,7 +176,7 @@ export async function deleteUser(id: string) {
 
 // 사용자 비밀번호 설정
 export async function setUserPassword(userId: string, password: string) {
-  console.log('🔐 setUserPassword 호출:', { userId, passwordLength: password.length })
+  console.log('🔐 setUserPassword 호출:', { userId, passwordLength: password.length, userIdType: typeof userId })
   
   const hashedPassword = await bcrypt.hash(password, 10)
   console.log('🔐 비밀번호 해시 완료')
@@ -195,7 +195,9 @@ export async function setUserPassword(userId: string, password: string) {
     updateQuery = updateQuery.eq('name', userId)
   }
   
+  console.log('🔐 업데이트 쿼리 실행 전')
   const { data, error } = await updateQuery.select()
+  console.log('🔐 업데이트 쿼리 결과:', { data, error, dataLength: data?.length })
   
   if (error) {
     console.error('🔐 비밀번호 설정 실패:', error)
@@ -203,6 +205,13 @@ export async function setUserPassword(userId: string, password: string) {
   }
   
   if (!data || data.length === 0) {
+    console.error('🔐 사용자 찾기 실패 - userId:', userId, 'isUUID:', isUUID)
+    // 실제로 해당 사용자가 존재하는지 확인해보자
+    const checkQuery = isUUID 
+      ? supabase.from('users').select('*').eq('id', userId)
+      : supabase.from('users').select('*').eq('name', userId)
+    const { data: checkData } = await checkQuery
+    console.log('🔐 사용자 존재 확인:', { checkData, checkDataLength: checkData?.length })
     throw new Error('사용자를 찾을 수 없거나 비밀번호 설정에 실패했습니다.')
   }
   
