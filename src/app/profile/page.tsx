@@ -215,14 +215,10 @@ export default function ProfilePage() {
       console.log('🔄 업로드 결과로 프로필 데이터 업데이트:', updatedUserData?.profile_image_url)
       if (updatedUserData) {
         const hasRealImage = hasUploadedProfileImageSync(updatedUserData)
-        setProfileData(updatedUserData)
+        // RPC 함수에서 반환된 데이터는 제한적이므로 프로필 이미지와 hasRealImage만 업데이트
+        setProfileData(prev => ({ ...prev, profile_image_url: updatedUserData.profile_image_url }))
         setHasRealProfileImage(hasRealImage)
-        setEditData({
-          phone_number: updatedUserData.phone_number || '',
-          attendance: updatedUserData.attendance || '',
-          program: updatedUserData.program || ''
-        })
-        console.log('✅ 프로필 데이터 즉시 업데이트 완료, 실제 이미지:', hasRealImage)
+        console.log('✅ 프로필 이미지 즉시 업데이트 완료, 실제 이미지:', hasRealImage)
       }
       
       // 추가 안전장치: 약간의 지연 후 DB에서 다시 한 번 확인
