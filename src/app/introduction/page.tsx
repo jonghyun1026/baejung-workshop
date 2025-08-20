@@ -610,15 +610,6 @@ export default function IntroductionPage() {
                       <span>사진 업로드</span>
                     </Button>
                     
-                    {/* 디버깅을 위한 로그 */}
-                    {console.log('🔍 삭제 버튼 렌더링 조건 확인:', {
-                      hasRealProfileImage,
-                      profileImage,
-                      selectedUserId,
-                      userId: user?.id,
-                      profileImageIncludesPicksum: profileImage?.includes('picsum.photos')
-                    })}
-                    
                     {hasRealProfileImage && (
                       <Button
                         type="button"
