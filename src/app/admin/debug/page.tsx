@@ -43,13 +43,9 @@ export default function AdminDebugPage() {
         .from('users')
         .insert({
           id: user.id,
-          name: user.name || user.email || '이름 없음',
+          name: user.user_metadata?.name || user.user_metadata?.full_name || user.email || '이름 없음',
           school: '미설정',
           major: '미설정',
-          gender: '미설정',
-          generation: '1',
-          status: 'active',
-          ws_group: '미정',
           role: 'student'
         })
       
@@ -84,13 +80,9 @@ export default function AdminDebugPage() {
           .from('users')
           .insert({
             id: user.id,
-            name: user.name || user.email || '이름 없음',
+            name: user.user_metadata?.name || user.user_metadata?.full_name || user.email || '이름 없음',
             school: '미설정',
             major: '미설정',
-            gender: '미설정',
-            generation: '1',
-            status: 'active',
-            ws_group: '미정',
             role: 'admin'
           })
       } else {

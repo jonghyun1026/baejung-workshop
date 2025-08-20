@@ -1,13 +1,5 @@
 # 🏆 OK배·정장학재단 2025 하반기 워크숍 웹페이지
 
-[![Next.js](https://img.shields.io/badge/Next.js-15.1-black?logo=next.js)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-19.0-blue?logo=react)](https://reactjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)](https://www.typescriptlang.org/)
-[![Supabase](https://img.shields.io/badge/Supabase-Backend-green?logo=supabase)](https://supabase.com/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
-
-**20250823-24 배정장학재단 워크숍 전용 웹사이트**
-
 OK배·정장학재단 2025년 하반기 장학생 워크숍을 위한 공식 행사 웹페이지입니다.  
 장학생들이 행사 정보를 쉽고 빠르게 확인하고, 자기소개를 등록하며, 사진을 공유할 수 있는 통합 플랫폼입니다.
 
