@@ -37,9 +37,20 @@ export async function getUserRoomAssignmentByName(userName: string) {
   try {
     console.log('🔍 getUserRoomAssignmentByName 호출:', userName)
     
-    // RLS를 우회하는 Supabase 함수 사용
+    // 사용자 이름으로 방 배정 정보 조회
     const { data, error } = await supabase
-      .rpc('get_user_room_by_name', { p_user_name: userName })
+      .from('room_assignments')
+      .select(`
+        *,
+        rooms:room_id (
+          room_number,
+          building_name,
+          capacity,
+          Type
+        )
+      `)
+      .eq('user_name', userName)
+      .single()
 
     console.log('📊 방 배정 조회 결과:', { data, error })
 
@@ -71,9 +82,21 @@ export async function getRoommates(roomId: string) {
   try {
     console.log('👥 getRoommates 호출:', roomId)
     
-    // RLS를 우회하는 Supabase 함수 사용
+    // 특정 방의 모든 거주자 정보 조회
     const { data, error } = await supabase
-      .rpc('get_roommates_by_room_id', { p_room_id: roomId })
+      .from('room_assignments')
+      .select(`
+        user_id,
+        user_name,
+        users:user_id (
+          name,
+          school,
+          major,
+          generation,
+          phone_number
+        )
+      `)
+      .eq('room_id', roomId)
 
     console.log('👥 동숙자 조회 결과:', { data, error })
 
@@ -82,7 +105,7 @@ export async function getRoommates(roomId: string) {
       throw error
     }
 
-    // JSON 배열을 일반 배열로 변환
+    // 배열 반환
     const roommates = data || []
     console.log('👥 동숙자 수:', roommates.length)
     

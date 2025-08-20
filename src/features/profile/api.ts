@@ -147,15 +147,19 @@ export async function deleteProfileImage(userInfo: { id?: string, name?: string 
     // 기존 프로필 이미지 삭제
     await deleteExistingProfileImage(actualUserId)
 
-    // DB에서 프로필 이미지 URL 제거 (RLS 우회 함수 사용)
+    // DB에서 프로필 이미지 URL 제거
     const { data: deleteResult, error: dbError } = await supabase
-      .rpc('delete_user_profile_image', {
-        user_id: actualUserId
+      .from('users')
+      .update({
+        profile_image_url: null
       })
+      .eq('id', actualUserId)
+      .select()
+      .single()
 
-    if (dbError || !deleteResult) {
+    if (dbError) {
       console.error('❌ DB 업데이트 실패:', dbError)
-      throw dbError || new Error('프로필 이미지 URL 삭제 실패')
+      throw dbError
     }
 
     console.log('✅ 프로필 이미지 삭제 완료')

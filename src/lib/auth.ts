@@ -180,8 +180,10 @@ export async function syncUserToDatabase(user: User) {
       name: user.user_metadata?.name || user.email?.split('@')[0] || '사용자',
       school: '미설정',
       major: '미설정',
-      status: '참가자',
-      ws_group: 'A조'
+      status: 'active',
+      ws_group: '미정',
+      gender: '미설정',
+      generation: '1'
     }
 
     if (existingUser) {
