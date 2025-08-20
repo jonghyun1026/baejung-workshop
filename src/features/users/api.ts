@@ -195,18 +195,18 @@ export async function setUserPassword(userId: string, password: string) {
     updateQuery = updateQuery.eq('name', userId)
   }
   
-  const { data, error } = await updateQuery.select().single()
+  const { data, error } = await updateQuery.select()
   
   if (error) {
     console.error('🔐 비밀번호 설정 실패:', error)
     throw new Error(`비밀번호 설정 실패: ${error.message}`)
   }
   
-  if (!data) {
+  if (!data || data.length === 0) {
     throw new Error('사용자를 찾을 수 없거나 비밀번호 설정에 실패했습니다.')
   }
   
-  console.log('🔐 비밀번호 설정 성공:', data.name)
+  console.log('🔐 비밀번호 설정 성공:', data[0]?.name)
   return true
 }
 
@@ -228,19 +228,19 @@ export async function verifyUserPassword(userId: string, password: string) {
     selectQuery = selectQuery.eq('name', userId)
   }
   
-  const { data, error } = await selectQuery.single()
+  const { data, error } = await selectQuery
   
   if (error) {
     console.error('🔐 비밀번호 확인 실패:', error)
     throw new Error(`비밀번호 확인 실패: ${error.message}`)
   }
   
-  if (!data || !data.password_hash) {
+  if (!data || data.length === 0 || !data[0]?.password_hash) {
     console.log('🔐 비밀번호가 설정되지 않음')
     return false
   }
   
-  const isValid = await bcrypt.compare(password, data.password_hash)
+  const isValid = await bcrypt.compare(password, data[0].password_hash)
   console.log('🔐 비밀번호 확인 결과:', isValid)
   return isValid
 }
