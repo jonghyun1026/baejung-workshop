@@ -97,9 +97,9 @@ export default function RoomsPage() {
         if (myRoom?.room_id) {
           console.log('👥 동숙자 조회 시작, 방 ID:', myRoom.room_id)
           const mates = await getRoommates(myRoom.room_id)
-          const filteredMates = mates.filter(mate => 
+          const filteredMates = Array.isArray(mates) ? mates.filter((mate: any) => 
             mate.user_id !== user.id && mate.user_name !== user.name
-          )
+          ) : []
           setRoommates(filteredMates)
           console.log('👥 동숙자 조회 완료:', filteredMates)
         } else {
