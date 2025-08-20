@@ -451,6 +451,31 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      set_user_password: {
+        Args: {
+          p_user_id: string
+          p_password_hash: string
+        }
+        Returns: {
+          id: string
+          name: string
+          school: string
+          major: string
+          generation: string
+          gender: string
+          role: string
+          status: string
+          ws_group: string
+          phone_number: string | null
+          birth_date: string | null
+          program: string | null
+          attendance: string | null
+          profile_image_url: string | null
+          password_hash: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+      }
       unassign_room_by_name: {
         Args: { user_name: string }
         Returns: Json
