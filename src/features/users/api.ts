@@ -176,16 +176,29 @@ export async function deleteUser(id: string) {
 
 // 사용자 비밀번호 설정
 export async function setUserPassword(userId: string, password: string) {
-  const hashedPassword = await bcrypt.hash(password, 10)
+  console.log('🔐 setUserPassword 호출:', { userId, passwordLength: password.length })
   
-  const { data, error } = await supabase
-    .from('users')
-    .update({ password_hash: hashedPassword })
-    .eq('id', userId)
-    .select()
-    .single()
+  const hashedPassword = await bcrypt.hash(password, 10)
+  console.log('🔐 비밀번호 해시 완료')
+  
+  // userId가 실제 UUID인지 확인하고, 그렇지 않으면 name으로 검색
+  let updateQuery = supabase.from('users').update({ password_hash: hashedPassword })
+  
+  // UUID 형식인지 확인 (36자리, 하이픈 포함)
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)
+  
+  if (isUUID) {
+    console.log('🔐 UUID로 사용자 업데이트:', userId)
+    updateQuery = updateQuery.eq('id', userId)
+  } else {
+    console.log('🔐 이름으로 사용자 업데이트:', userId)
+    updateQuery = updateQuery.eq('name', userId)
+  }
+  
+  const { data, error } = await updateQuery.select().single()
   
   if (error) {
+    console.error('🔐 비밀번호 설정 실패:', error)
     throw new Error(`비밀번호 설정 실패: ${error.message}`)
   }
   
@@ -193,26 +206,43 @@ export async function setUserPassword(userId: string, password: string) {
     throw new Error('사용자를 찾을 수 없거나 비밀번호 설정에 실패했습니다.')
   }
   
+  console.log('🔐 비밀번호 설정 성공:', data.name)
   return true
 }
 
 // 사용자 비밀번호 확인
 export async function verifyUserPassword(userId: string, password: string) {
-  const { data, error } = await supabase
-    .from('users')
-    .select('password_hash')
-    .eq('id', userId)
-    .single()
+  console.log('🔐 verifyUserPassword 호출:', { userId, passwordLength: password.length })
+  
+  // userId가 실제 UUID인지 확인하고, 그렇지 않으면 name으로 검색
+  let selectQuery = supabase.from('users').select('password_hash')
+  
+  // UUID 형식인지 확인
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)
+  
+  if (isUUID) {
+    console.log('🔐 UUID로 사용자 조회:', userId)
+    selectQuery = selectQuery.eq('id', userId)
+  } else {
+    console.log('🔐 이름으로 사용자 조회:', userId)
+    selectQuery = selectQuery.eq('name', userId)
+  }
+  
+  const { data, error } = await selectQuery.single()
   
   if (error) {
+    console.error('🔐 비밀번호 확인 실패:', error)
     throw new Error(`비밀번호 확인 실패: ${error.message}`)
   }
   
-  if (!data.password_hash) {
+  if (!data || !data.password_hash) {
+    console.log('🔐 비밀번호가 설정되지 않음')
     return false
   }
   
-  return await bcrypt.compare(password, data.password_hash)
+  const isValid = await bcrypt.compare(password, data.password_hash)
+  console.log('🔐 비밀번호 확인 결과:', isValid)
+  return isValid
 }
 
 // 사용자 검색 (이름 부분 일치)
