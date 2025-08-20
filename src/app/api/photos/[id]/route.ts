@@ -6,14 +6,14 @@ const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY as string | undefin
 
 export async function DELETE(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     if (!supabaseUrl || !serviceRoleKey) {
       return NextResponse.json({ message: '서버 환경변수 미설정' }, { status: 500 })
     }
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey)
-    const photoId = params.id
+    const { id: photoId } = await params
     if (!photoId) {
       return NextResponse.json({ message: '사진 ID 필요' }, { status: 400 })
     }
