@@ -33,14 +33,46 @@ export async function getPhotos() {
   }
 }
 
-// 사진 업로드
+// 파일 타입 및 크기 검증
+export function validateMediaFile(file: File) {
+  // 허용되는 파일 확장자
+  const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'mp3', 'mov', 'avi', 'mkv', 'wmv', 'flv']
+  // 동영상 확장자
+  const videoExtensions = ['mp4', 'mp3', 'mov', 'avi', 'mkv', 'wmv', 'flv']
+  // 이미지 확장자
+  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp']
+  
+  const fileExt = file.name.split('.').pop()?.toLowerCase()
+  
+  if (!fileExt || !allowedExtensions.includes(fileExt)) {
+    throw new Error(`지원하지 않는 파일 형식입니다. 허용 형식: ${allowedExtensions.join(', ')}`)
+  }
+  
+  // 동영상 파일의 경우 100MB 제한, 이미지의 경우 10MB 제한
+  const maxSize = videoExtensions.includes(fileExt) ? 100 * 1024 * 1024 : 10 * 1024 * 1024 // 100MB or 10MB
+  
+  if (file.size > maxSize) {
+    const maxSizeMB = maxSize / (1024 * 1024)
+    throw new Error(`파일 크기가 너무 큽니다. 최대 크기: ${maxSizeMB}MB`)
+  }
+  
+  return {
+    isVideo: videoExtensions.includes(fileExt),
+    isImage: imageExtensions.includes(fileExt),
+    extension: fileExt
+  }
+}
+
+// 미디어 파일 업로드 (사진 + 동영상)
 export async function uploadPhoto(file: File, description?: string, userInfo?: { id?: string, name?: string }) {
   try {
     if (!userInfo) {
       throw new Error('사용자 정보가 필요합니다.')
     }
 
-    console.log('📤 사진 업로드 시작:', file.name, 'User Info:', userInfo)
+    // 파일 검증
+    const fileInfo = validateMediaFile(file)
+    console.log('📤 미디어 파일 업로드 시작:', file.name, 'Type:', fileInfo.isVideo ? 'Video' : 'Image', 'User Info:', userInfo)
 
     // Directory 기반 인증에서는 실제 users 테이블의 user_id를 찾아야 함
     let actualUserId = userInfo.id
@@ -91,7 +123,10 @@ export async function uploadPhoto(file: File, description?: string, userInfo?: {
       .insert({
         user_id: actualUserId,
         image_url: urlData.publicUrl,
-        description: description || null
+        description: description || null,
+        file_type: fileInfo.isVideo ? 'video' : 'image',
+        file_extension: fileInfo.extension,
+        file_size: file.size
       })
       .select()
       .single()
@@ -334,11 +369,31 @@ export async function checkStorageBucket() {
   }
 }
 
-// 플레이스홀더 이미지 URL 생성
-export function getPhotoUrl(photo: any) {
-  if (photo.image_url && photo.image_url.includes('.')) {
-    return photo.image_url
+// 미디어 파일 URL 생성
+export function getMediaUrl(media: any) {
+  if (media.image_url && media.image_url.includes('.')) {
+    return media.image_url
   }
   // 플레이스홀더 이미지
   return 'https://picsum.photos/400/400?grayscale'
+}
+
+// 미디어 파일 타입 확인
+export function isVideoFile(media: any) {
+  return media.file_type === 'video' || 
+         ['mp4', 'mp3', 'mov', 'avi', 'mkv', 'wmv', 'flv'].includes(media.file_extension?.toLowerCase())
+}
+
+// 파일 크기를 읽기 쉬운 형식으로 변환
+export function formatFileSize(bytes: number) {
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+}
+
+// 기존 호환성을 위한 함수
+export function getPhotoUrl(photo: any) {
+  return getMediaUrl(photo)
 }

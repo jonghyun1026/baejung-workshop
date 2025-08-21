@@ -6,7 +6,7 @@ import { useAdmin } from '@/hooks/useAdmin'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { Settings, FileText, Users, Calendar, Home, LogOut, Building } from 'lucide-react'
+import { Settings, FileText, Users, Calendar, Home, LogOut, Building, Bus, Waves } from 'lucide-react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
@@ -161,6 +161,15 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   <Link href="/admin/rooms" className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors">
                     <Building className="h-5 w-5" />
                     <span>숙소 관리</span>
+                  </Link>
+                  <Separator />
+                  <Link href="/admin/bus" className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors">
+                    <Bus className="h-5 w-5" />
+                    <span>단체버스 배정</span>
+                  </Link>
+                  <Link href="/admin/wavepark" className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors">
+                    <Waves className="h-5 w-5" />
+                    <span>웨이브파크 배정</span>
                   </Link>
                 </nav>
               </CardContent>

@@ -124,23 +124,28 @@ export async function getUserByNameAndPhone(name: string, phone: string) {
 
 // 사용자 생성
 export async function createUser(userData: CreateUserData) {
-  // 필수 필드 추가
-  const insertData = {
-    ...userData,
-    status: userData.status || 'active',
-    ws_group: userData.ws_group || '미정'
-  }
-
-  const { data, error } = await supabase
-    .from('users')
-    .insert(insertData)
-    .select()
-    .single()
+  console.log('👤 사용자 생성:', userData)
+  
+  const { data, error } = await supabase.rpc('admin_create_user_safe', {
+    p_name: userData.name,
+    p_school: userData.school,
+    p_major: userData.major,
+    p_generation: userData.generation,
+    p_gender: userData.gender,
+    p_phone_number: userData.phone_number || null,
+    p_role: userData.role || 'student',
+    p_status: userData.status || 'active',
+    p_ws_group: userData.ws_group || '미정',
+    p_birth_date: userData.birth_date || null,
+    p_program: userData.program || null
+  })
 
   if (error) {
+    console.error('❌ 사용자 생성 실패:', error)
     throw new Error(`사용자 생성 실패: ${error.message}`)
   }
 
+  console.log('✅ 사용자 생성 성공:', data.name)
   return data
 }
 
@@ -162,16 +167,19 @@ export async function updateUser(id: string, updates: Partial<User>) {
 
 // 사용자 삭제
 export async function deleteUser(id: string) {
-  const { error } = await supabase
-    .from('users')
-    .delete()
-    .eq('id', id)
+  console.log('🗑️ 사용자 삭제:', id)
+  
+  const { data, error } = await supabase.rpc('admin_delete_user_safe', {
+    p_user_id: id
+  })
 
   if (error) {
+    console.error('❌ 사용자 삭제 실패:', error)
     throw new Error(`사용자 삭제 실패: ${error.message}`)
   }
 
-  return true
+  console.log('✅ 사용자 삭제 성공:', data)
+  return data
 }
 
 // 사용자 비밀번호 설정

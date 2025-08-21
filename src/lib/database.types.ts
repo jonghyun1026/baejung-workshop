@@ -14,6 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      bus_assignments: {
+        Row: {
+          arrival_location: string | null
+          created_at: string | null
+          departure_bus: string | null
+          departure_location: string | null
+          departure_time: string | null
+          id: string
+          notes: string | null
+          return_bus: string | null
+          return_time: string | null
+          updated_at: string | null
+          user_id: string | null
+          user_name: string
+        }
+        Insert: {
+          arrival_location?: string | null
+          created_at?: string | null
+          departure_bus?: string | null
+          departure_location?: string | null
+          departure_time?: string | null
+          id?: string
+          notes?: string | null
+          return_bus?: string | null
+          return_time?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          user_name: string
+        }
+        Update: {
+          arrival_location?: string | null
+          created_at?: string | null
+          departure_bus?: string | null
+          departure_location?: string | null
+          departure_time?: string | null
+          id?: string
+          notes?: string | null
+          return_bus?: string | null
+          return_time?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          user_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bus_assignments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           created_at: string | null
@@ -397,6 +450,47 @@ export type Database = {
         }
         Relationships: []
       }
+      wavepark_assignments: {
+        Row: {
+          created_at: string | null
+          id: string
+          notes: string | null
+          program_type: string
+          session_time: string | null
+          updated_at: string | null
+          user_id: string
+          user_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          program_type: string
+          session_time?: string | null
+          updated_at?: string | null
+          user_id: string
+          user_name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          program_type?: string
+          session_time?: string | null
+          updated_at?: string | null
+          user_id?: string
+          user_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wavepark_assignments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       room_assignment_summary: {
@@ -430,49 +524,140 @@ export type Database = {
       }
     }
     Functions: {
-      admin_create_event: {
+      admin_create_notice_safe: {
         Args: {
-          p_description?: string
-          p_end_time?: string
-          p_event_date: string
-          p_location?: string
-          p_order_index?: number
-          p_start_time: string
           p_title: string
-        }
-        Returns: string
-      }
-      admin_create_notice: {
-        Args: { p_content: string; p_is_important?: boolean; p_title: string }
-        Returns: string
-      }
-      admin_delete_event: {
-        Args: { p_id: string }
-        Returns: boolean
-      }
-      admin_delete_notice: {
-        Args: { p_id: string }
-        Returns: boolean
-      }
-      admin_update_event: {
-        Args: {
-          p_description?: string
-          p_end_time?: string
-          p_event_date: string
-          p_id: string
-          p_location?: string
-          p_order_index?: number
-          p_start_time: string
-          p_title: string
-        }
-        Returns: boolean
-      }
-      admin_update_notice: {
-        Args: {
           p_content: string
-          p_id: string
           p_is_important?: boolean
+        }
+        Returns: {
+          id: string
+          title: string
+          content: string
+          author_id: string | null
+          is_important: boolean
+          created_at: string
+          updated_at: string
+        }
+      }
+      admin_update_notice_safe: {
+        Args: {
+          p_id: string
           p_title: string
+          p_content: string
+          p_is_important?: boolean
+        }
+        Returns: {
+          id: string
+          title: string
+          content: string
+          author_id: string | null
+          is_important: boolean
+          created_at: string
+          updated_at: string
+        }
+      }
+      admin_delete_notice_safe: {
+        Args: {
+          p_id: string
+        }
+        Returns: boolean
+      }
+      admin_create_user_safe: {
+        Args: {
+          p_name: string
+          p_school: string
+          p_major: string
+          p_generation: string
+          p_gender: string
+          p_phone_number?: string
+          p_role?: string
+          p_status?: string
+          p_ws_group?: string
+          p_birth_date?: string
+          p_program?: string
+        }
+        Returns: {
+          id: string
+          name: string
+          school: string
+          major: string
+          generation: string
+          gender: string
+          phone_number: string | null
+          role: string | null
+          status: string
+          ws_group: string
+          birth_date: string | null
+          program: string | null
+          profile_image_url: string | null
+          password_hash: string | null
+          attendance: string | null
+          created_at: string
+          updated_at: string | null
+        }
+      }
+      admin_delete_user_safe: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: boolean
+      }
+      admin_assign_bus: {
+        Args: {
+          p_user_name: string
+          p_departure_bus?: string
+          p_departure_time?: string
+          p_departure_location?: string
+          p_return_bus?: string
+          p_return_time?: string
+          p_arrival_location?: string
+          p_notes?: string
+        }
+        Returns: {
+          id: string
+          user_id: string
+          user_name: string
+          departure_bus: string | null
+          departure_time: string | null
+          departure_location: string | null
+          return_bus: string | null
+          return_time: string | null
+          arrival_location: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+      }
+      admin_assign_wavepark: {
+        Args: {
+          p_user_name: string
+          p_program_type: string
+          p_session_time?: string
+          p_location?: string
+          p_notes?: string
+        }
+        Returns: {
+          id: string
+          user_id: string
+          user_name: string
+          program_type: string
+          session_time: string | null
+          location: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+      }
+      admin_remove_bus_assignment: {
+        Args: {
+          p_user_name: string
+        }
+        Returns: boolean
+      }
+      admin_remove_wavepark_assignment: {
+        Args: {
+          p_user_name: string
         }
         Returns: boolean
       }

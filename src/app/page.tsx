@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Calendar, Users, Camera, Home, FileText, MessageCircle } from 'lucide-react'
+import { Calendar, Users, Camera, Home, FileText, MessageCircle, Bus, Waves } from 'lucide-react'
 import Link from 'next/link'
 import AuthStatus from '@/components/auth/AuthStatus'
 import NoticesSection from '@/components/NoticesSection'
@@ -50,11 +50,11 @@ export default function HomePage() {
       <section className="relative z-10 py-8">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            WORKSHOP
+            2025년 하반기 장학생 Workshop
           </h2>
           <p className="text-xl text-white/90 max-w-2xl mx-auto mb-8">
-            장학생 여러분과 함께하는 의미 있는 시간이 될 것입니다.
-            아래 메뉴를 통해 필요한 정보를 확인하고 참여해보세요.
+            장학생 여러분을 위한 다양한 프로그램이 준비되어 있습니다.<br />
+            아래 메뉴에서 확인해 보세요.
           </p>
         </div>
       </section>
@@ -179,6 +179,56 @@ export default function HomePage() {
                 <div className="flex items-center justify-between">
                   <Badge variant="outline" className="border-green-200 text-green-700">배정 현황</Badge>
                   <Button variant="ghost" size="sm" className="text-green-600 hover:text-green-800">
+                    보기 →
+                  </Button>
+                </div>
+              </CardContent>
+            </Link>
+          </Card>
+
+          {/* 단체버스 배정 */}
+          <Card className="hover:shadow-2xl transition-all duration-300 cursor-pointer bg-white/95 backdrop-blur-sm border-0 hover:scale-105">
+            <Link href="/bus">
+              <CardHeader className="pb-3">
+                <div className="flex items-center space-x-2">
+                  <div className="p-2 bg-orange-100 rounded-lg">
+                    <Bus className="h-6 w-6 text-orange-600" />
+                  </div>
+                  <CardTitle className="text-lg text-gray-900">단체버스 배정</CardTitle>
+                </div>
+                <CardDescription className="text-gray-600">
+                  워크숍 단체버스 탑승 정보를 확인하세요
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <Badge variant="outline" className="border-orange-200 text-orange-700">1~3호차</Badge>
+                  <Button variant="ghost" size="sm" className="text-orange-600 hover:text-orange-800">
+                    보기 →
+                  </Button>
+                </div>
+              </CardContent>
+            </Link>
+          </Card>
+
+          {/* 웨이브파크 프로그램 */}
+          <Card className="hover:shadow-2xl transition-all duration-300 cursor-pointer bg-white/95 backdrop-blur-sm border-0 hover:scale-105">
+            <Link href="/wavepark">
+              <CardHeader className="pb-3">
+                <div className="flex items-center space-x-2">
+                  <div className="p-2 bg-cyan-100 rounded-lg">
+                    <Waves className="h-6 w-6 text-cyan-600" />
+                  </div>
+                  <CardTitle className="text-lg text-gray-900">웨이브파크 프로그램</CardTitle>
+                </div>
+                <CardDescription className="text-gray-600">
+                  서핑과 미오코스타 프로그램 배정을 확인하세요
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <Badge variant="outline" className="border-cyan-200 text-cyan-700">서핑·미오코스타</Badge>
+                  <Button variant="ghost" size="sm" className="text-cyan-600 hover:text-cyan-800">
                     보기 →
                   </Button>
                 </div>

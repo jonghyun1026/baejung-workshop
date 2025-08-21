@@ -38,6 +38,7 @@ export default function AdminUsersPage() {
   const [schoolFilter, setSchoolFilter] = useState('all')
   const [generationFilter, setGenerationFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [wsGroupFilter, setWsGroupFilter] = useState('all')
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   
   // 사용자 추가 모달 상태
@@ -62,7 +63,7 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     filterUsers()
-  }, [users, searchQuery, schoolFilter, generationFilter, statusFilter])
+  }, [users, searchQuery, schoolFilter, generationFilter, statusFilter, wsGroupFilter])
 
   const loadUsers = async () => {
     try {
@@ -108,6 +109,11 @@ export default function AdminUsersPage() {
     // 상태 필터
     if (statusFilter !== 'all') {
       filtered = filtered.filter(user => user.status === statusFilter)
+    }
+
+    // 워크숍 조 필터
+    if (wsGroupFilter !== 'all') {
+      filtered = filtered.filter(user => user.ws_group === wsGroupFilter)
     }
 
     setFilteredUsers(filtered)
@@ -365,7 +371,7 @@ export default function AdminUsersPage() {
                         <SelectValue placeholder="기수 선택" />
                       </SelectTrigger>
                       <SelectContent>
-                        {['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'].map(gen => (
+                        {['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'].map(gen => (
                           <SelectItem key={gen} value={gen}>{gen}기</SelectItem>
                         ))}
                       </SelectContent>
@@ -381,8 +387,9 @@ export default function AdminUsersPage() {
                         <SelectValue placeholder="성별 선택" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="남성">남성</SelectItem>
-                        <SelectItem value="여성">여성</SelectItem>
+                        <SelectItem value="남">남성</SelectItem>
+                        <SelectItem value="여">여성</SelectItem>
+                        <SelectItem value="staff">스태프</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -557,6 +564,17 @@ export default function AdminUsersPage() {
                 <SelectItem value="active">활성</SelectItem>
                 <SelectItem value="inactive">비활성</SelectItem>
                 <SelectItem value="pending">대기</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={wsGroupFilter} onValueChange={setWsGroupFilter}>
+              <SelectTrigger className="w-full md:w-32">
+                <SelectValue placeholder="워크숍 조" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">모든 조</SelectItem>
+                {getUniqueValues('ws_group').map(group => (
+                  <SelectItem key={group} value={group}>{group}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

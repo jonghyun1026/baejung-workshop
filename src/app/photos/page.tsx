@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Heart, Upload, Camera, Trash2, User } from 'lucide-react'
+import { Heart, Upload, Camera, Trash2, User, Video, FileImage, Play } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/hooks/useAuth'
-import { getPhotos, uploadPhoto, likePhoto, unlikePhoto, checkPhotoLike, deletePhoto, checkStorageBucket, getPhotoUrl, getUserLikedPhotos, type Photo } from '@/features/photos/api'
+import { getPhotos, uploadPhoto, likePhoto, unlikePhoto, checkPhotoLike, deletePhoto, checkStorageBucket, getMediaUrl, isVideoFile, formatFileSize, validateMediaFile, getUserLikedPhotos, type Photo } from '@/features/photos/api'
 
 export default function PhotosPage() {
   const { user } = useAuth()
@@ -108,15 +108,27 @@ export default function PhotosPage() {
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
-      if (file.size > 10 * 1024 * 1024) { // 10MB 제한
+      try {
+        // 파일 검증 (이미지 + 동영상)
+        const fileInfo = validateMediaFile(file)
+        console.log('선택된 파일:', file.name, fileInfo)
+        
+        setSelectedFile(file)
+        
         toast({
-          title: "파일 크기 초과",
-          description: "10MB 이하의 파일만 업로드할 수 있습니다.",
-          variant: "destructive"
+          title: '파일 선택됨',
+          description: `${fileInfo.isVideo ? '동영상' : '이미지'} 파일이 선택되었습니다. (${formatFileSize(file.size)})`,
         })
-        return
+      } catch (error: any) {
+        toast({
+          title: '파일 선택 오류',
+          description: error.message,
+          variant: 'destructive'
+        })
+        setSelectedFile(null)
+        // 파일 input 초기화
+        event.target.value = ''
       }
-    setSelectedFile(file)
     }
   }
 
@@ -330,7 +342,7 @@ Supabase 대시보드에서 Storage 설정이 필요합니다:
     <div className="container mx-auto px-4 py-8">
       {/* 헤더 */}
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">📸 사진첩</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">📸 미디어 갤러리</h1>
         <p className="text-gray-600">워크숍의 소중한 순간들을 공유해보세요</p>
       </div>
 
@@ -394,7 +406,7 @@ Supabase 대시보드에서 Storage 설정이 필요합니다:
                 <input
                   id="photo-upload"
                   type="file"
-                  accept="image/*"
+                  accept="image/*,video/*,.mp3,.mov,.avi,.mkv,.wmv,.flv"
                   onChange={handleFileSelect}
                   className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                 />
@@ -456,15 +468,57 @@ Supabase 대시보드에서 Storage 설정이 필요합니다:
             {photos.map((photo) => (
               <Card key={photo.id} className="overflow-hidden">
                 <div className="aspect-square relative">
-                  <img
-                    src={getPhotoUrl(photo)}
-                    alt={photo.description || '워크숍 사진'}
-                      className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const img = e.target as HTMLImageElement
-                      img.src = 'https://picsum.photos/400/400?grayscale'
-                    }}
-                  />
+                  {isVideoFile(photo) ? (
+                    <div className="relative w-full h-full bg-black flex items-center justify-center">
+                      <video
+                        src={getMediaUrl(photo)}
+                        className="w-full h-full object-cover"
+                        controls
+                        preload="metadata"
+                        onError={(e) => {
+                          console.error('동영상 로드 실패:', e)
+                        }}
+                      />
+                      <div className="absolute top-2 left-2 bg-black bg-opacity-70 rounded px-2 py-1 flex items-center">
+                        <Video className="h-3 w-3 text-white mr-1" />
+                        <span className="text-xs text-white">
+                          {photo.file_extension?.toUpperCase() || 'VIDEO'}
+                        </span>
+                      </div>
+                      {photo.file_size && (
+                        <div className="absolute top-2 right-2 bg-black bg-opacity-70 rounded px-2 py-1">
+                          <span className="text-xs text-white">
+                            {formatFileSize(photo.file_size)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="relative w-full h-full">
+                      <img
+                        src={getMediaUrl(photo)}
+                        alt={photo.description || '워크숍 사진'}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const img = e.target as HTMLImageElement
+                          img.src = 'https://picsum.photos/400/400?grayscale'
+                        }}
+                      />
+                      <div className="absolute top-2 left-2 bg-black bg-opacity-70 rounded px-2 py-1 flex items-center">
+                        <FileImage className="h-3 w-3 text-white mr-1" />
+                        <span className="text-xs text-white">
+                          {photo.file_extension?.toUpperCase() || 'IMG'}
+                        </span>
+                      </div>
+                      {photo.file_size && (
+                        <div className="absolute top-2 right-2 bg-black bg-opacity-70 rounded px-2 py-1">
+                          <span className="text-xs text-white">
+                            {formatFileSize(photo.file_size)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <CardContent className="p-4">
                   {photo.description && (

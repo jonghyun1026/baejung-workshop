@@ -19,6 +19,7 @@ export default function DirectoryPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [schoolFilter, setSchoolFilter] = useState('all')
   const [majorFilter, setMajorFilter] = useState('all')
+  const [wsGroupFilter, setWsGroupFilter] = useState('all')
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [selectedUserName, setSelectedUserName] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -64,14 +65,22 @@ export default function DirectoryPage() {
       filtered = filtered.filter(user => user.major === majorFilter)
     }
 
+    // 워크숍 조 필터링
+    if (wsGroupFilter !== 'all') {
+      filtered = filtered.filter(user => user.ws_group === wsGroupFilter)
+    }
+
     setFilteredUsers(filtered)
-  }, [searchTerm, schoolFilter, majorFilter, users])
+  }, [searchTerm, schoolFilter, majorFilter, wsGroupFilter, users])
 
   // 고유한 학교 목록
   const schools = Array.from(new Set(users.map(user => user.school))).sort()
   
   // 고유한 전공 목록
   const majors = Array.from(new Set(users.map(user => user.major))).sort()
+
+  // 고유한 워크숍 조 목록
+  const wsGroups = Array.from(new Set(users.map(user => user.ws_group).filter(Boolean))).sort()
 
   // 자기소개 보기 함수
   const handleViewIntroduction = (user: User) => {
@@ -239,6 +248,22 @@ export default function DirectoryPage() {
                     {majors.map((major) => (
                       <SelectItem key={major} value={major}>
                         {major}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">워크숍 조별 필터</label>
+                <Select value={wsGroupFilter} onValueChange={setWsGroupFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="조 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">전체 조</SelectItem>
+                    {wsGroups.map((group) => (
+                      <SelectItem key={group} value={group}>
+                        {group}
                       </SelectItem>
                     ))}
                   </SelectContent>
